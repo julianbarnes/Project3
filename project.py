@@ -1,5 +1,6 @@
 from socket import *
 import sys
+import argparse
 
 if len(sys.argv) <= 1:
 	print('Usage : "python ProxyServer.py server_ip"\n[server_ip : It is the IP Address Of Proxy Server')
@@ -7,8 +8,8 @@ if len(sys.argv) <= 1:
 	
 # Create a server socket, bind it to a port and start listening
 tcpSerSock = socket(AF_INET, SOCK_STREAM)
-# Fill in start.
-# Fill in end.
+socket
+
 while 1:
 	# Strat receiving data from the client
 	print('Ready to serve...')
@@ -66,3 +67,12 @@ while 1:
 	tcpCliSock.close() 
 # Fill in start.		
 # Fill in end.
+def get_params():
+	#Initialize parser
+	parser = argparse.ArgumentParser(description='Configure IP Address and Port number for server.')
+	parser.add_argument('port', type=int, help='Port number')
+	parser.add_argument('root', type=str, help='Root folder')
+	
+	#Set variable args to results of parser
+	args = parser.parse_args()
+	return args
