@@ -48,7 +48,7 @@ def main():
 		request_message(request)
 		#Extract host and port number from request
 		host, port = get_host(request)
-		thread.start_new_thread(request_server, (host, port, request, counter,))
+		thread.start_new_thread(request_server, (host, port, request, ))
 		
 
 	client_proxy.close()
@@ -65,7 +65,7 @@ def get_params():
 	args = parser.parse_args()
 	return args
 
-def request_server(host, port, request, counter):
+def request_server(host, port, request):
 	
 	try:
 		send_socket = socket(AF_INET, SOCK_STREAM)                                  
@@ -79,13 +79,13 @@ def request_server(host, port, request, counter):
 			#Receive response from server to proxy
 			response = send_socket.recv(1024)
 			print("[CLI --- PRX <== SRV]\n")
-			#response_message(response)
+			response_message(response)
 			#Send response from proxy to client
 			if(len(response) > 0):
 				parsed_response = remove_hopper(response) 
 				proxy_client.send(response)
 				print("[CLI <== PRX --- SRV]\n")
-				#response_message(response)
+				response_message(response)
 			else:
 				break
 		#Close server socket and client socket
@@ -104,38 +104,45 @@ def request_server(host, port, request, counter):
 		proxy_client.close()
 		#print("[CLI disconnected]\n")
 
+#Removes hop to hop headers
 def remove_hopper(message):
 	lines = message.split("\n")
 	hoptohop = ["Connection", "Transfer-Encoding", "Keep-Alive", "Proxy-Authorization", "Proxy-Authentication", "Trailer", "Upgrade"]
 	output = ""
+	#Copies header lines that are not in hoptohop array
 	for line in lines:
 		if(line.split(":")[0] not in hoptohop):
 			output = output + line + "\n"
 	return output
 
+#Prints the request method for request
 def request_message(message):
 	first_header = message.split("\n")[0]
 	print("> " + first_header)
-
+#Prints the status code, content-type, and content-length of response
 def response_message(message):
 	lines = message.split("\n")
-	status_type = lines[0][9:]
-	i = 0
-	k = 0
-	#while(lines[i].split(":")[0] != "Content-Length"):
-		#i = i + 1
-	#while(lines[k].split(":")[0] != "Content-Type"):
-	#	k = k + 1
-	#if(len(lines[i]) > 1):
-	#	content_length = lines[i].split(" ")[1]
-	#if(len(lines[k]) > 1):
-	#	content_type = lines[k].split(" ")[1]
-	print("> " + status_type + "\n")
-	#print("> " + content_length + " " + content_type + "btyes\n")
+	status_type = ""
+	#Searches for line with status code
+	for line in lines:
+		if(line.split("/")[0] == "HTTP"):
+			status_line = line.split(" ")
+			status_type = status_line[1] + " " +status_line[2]
 	
+	content_type = ""
+	#Searches for line with content type
+	for line in lines:
+		if(line.split(":")[0] == "Content-Type"):
+			content_type = line.split(" ")[1]
+			break
+	print("> " + status_type + "\n")
+	print("> " + content_type + "btyes\n")
+
+#Extracts host and port number from HTTP request
 def get_host(message):
 	lines = message.split("\n")
 	k = 0
+	#Searches for Host line in request
 	while lines[k].split(":")[0] != "Host":
 		k = k + 1
 	host = lines[k][6:-1]
